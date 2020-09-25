@@ -10,22 +10,15 @@ LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
 BOOL Line(HDC hdc, int x1, int y1, int x2, int y2)
 {
-    MoveToEx(hdc, x1, y1, NULL); //сделать текущими координаты x1, y1
+    MoveToEx(hdc, x1, y1, NULL);
     return LineTo(hdc, x2, y2);
 }
 
 int CALLBACK  wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR szCmdLine, int nCmdShow)
-/*CALLBACK - #define для stdcall (соглашение для вызовов, вызываемый объект будет сам за собой очищать стек
- wWinMain - идентификатор
- HINSTANCE  hInstance - указатель на начало исполняемого модуля, мз сигнатуры. адрес памяти.
- HINSTANCE - не используется был акт. для 16 битных версий виндовс.
- PWSTR szCmdLine - указатель на строку UNICOD символов оканчивающихся нулём. По сути просто аргументы.
- int nCmdShow - параметр отвечающий за то как будет показываться окно (свёрнуто, развёрнуто, на весь экран и т.д.).
-*/
 {
-    MSG msg{};                             // Структура, которая содержит в себе информацию о соообщениях (между Windows и окном или между окнами).
-    HWND hwnd{};                          // Дескриптор окна ( HANDLE указ. на объект ядра в котором храниться информация о нашем окне).
-    WNDCLASSEX wc{ sizeof(WNDCLASSEX) }; // Эта структура отвечает за некие х-ки окна (в фигурных скобках размеры).Исп. агрегатная инициализация.
+    MSG msg{};
+    HWND hwnd{};
+    WNDCLASSEX wc{ sizeof(WNDCLASSEX) };
     wc.cbClsExtra = 0;
     wc.cbWndExtra = 0;
     wc.hbrBackground = reinterpret_cast<HBRUSH>(GetStockObject(WHITE_BRUSH));
@@ -34,47 +27,9 @@ int CALLBACK  wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR szCmdLine, int nCmd
     wc.hIconSm = LoadIcon(nullptr, IDI_APPLICATION);
     wc.hInstance = hInstance;
     wc.lpfnWndProc = WndProc;
-    //wc.lpfnWndProc = [](HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) -> LRESULT
-    //{
-    //    switch (uMsg)
-    //    {
-    //    case WM_DESTROY:
-    //    {
-    //        PostQuitMessage(EXIT_SUCCESS);
-    //    }
-    //    return 0;
-    //    }
-    //    return DefWindowProc(hWnd, uMsg, wParam, lParam); // вызывается в случае если сообщение не обрабатывается
-    //};
     wc.lpszClassName = L"MyAppClass";
     wc.lpszMenuName = nullptr;
     wc.style = CS_VREDRAW | CS_HREDRAW;
-    /*
-    wc.cbClsExtra = 0; Отвечают за дополнительное выделение памяти в
-    wc.cbWndExtra = 0; классе нашего окна (для записи какой либо информации в окно).
-
-    hbrBackground - Это поле принимает дескриптор кисти которая окрашивает окно.
-    GetStockObject - Возвращает GDI объект который мы можем привести к типу HBRUSH.
-
-    wc.hCursor = LoadCursor(nullptr, IDC_ARROW);     - HANDLE курсора.
-    wc.hIcon = LoadIcon(nullptr, IDI_APPLICATION);   - HANDLE иконки.
-    wc.hIconSm = LoadIcon(nullptr, IDI_APPLICATION); - HANDLE иконки (отображается сверху слева в заголовке окна).
-
-    wc.lpfnWndProc = [](HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) -> LRESULT
-    - Эта процедура отвечает за обработку сообщений (MSG msg{};)
-      Принимает 4 обязательных параметра и возвращает LRESULT (результат).
-      HWND hWnd     - дескриптор окна к которому приходит сообщение.
-      UINT uMsg     - код сообщения.
-      WPARAM wParam - указатель в нём храниться необходимая для сообщения информация.
-      LPARAM lParam - указатель в нём храниться необходимая для сообщения информация.
-
-      wc.lpszClassName = L"MyAppClass";   - имя класса (любое).
-      wc.lpszMenuName = nullptr;          - указатель на имя меню.
-      wc.style = CS_VREDRAW | CS_HREDRAW; - стиль окна (2 флага по умолчанию)
-
-
-
-    */
 
     if (!RegisterClassEx(&wc))
     {
@@ -82,48 +37,28 @@ int CALLBACK  wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR szCmdLine, int nCmd
     }
 
 
-    if (hwnd = CreateWindow(wc.lpszClassName, L"Paint", WS_OVERLAPPEDWINDOW, 0, 0, 600, 600, nullptr, nullptr, wc.hInstance, nullptr); 
+    if (hwnd = CreateWindow(wc.lpszClassName, L"Paint", WS_OVERLAPPEDWINDOW, 0, 0, 1920, 1080, nullptr, nullptr, wc.hInstance, nullptr); 
         hwnd == INVALID_HANDLE_VALUE)
     {
         return EXIT_FAILURE;
     }
         
-    /*
-     if (!RegisterClassEx(&wc)) - регистрация в системе класса нашего окна.
-      return EXIT_FAILURE;
+    ShowWindow(hwnd, nCmdShow); 
+    UpdateWindow(hwnd);         
 
-     if (hwnd = CreateWindow(wc.lpszClassName, L"Заголовок!", WS_OVERLAPPEDWINDOW, 0, 0, 600, 600, nullptr, nullptr, wc.hInstance, nullptr ); hwnd == INVALID_HANDLE_VALUE)
-      return EXIT_FAILURE;
-      - Создание нашего окна.
-      wc.lpszClassName    - имя класса.
-      L"Заголовок!"       - заголовок окна.
-      WS_OVERLAPPEDWINDOW - стиль окна (стили посмотреть в msdn).
-      0, 0,               - X и Y координаты окна (отсчитываются от левой верхней точки).
-      600, 600,           - ширина, высота.
-
-
-     */
-    ShowWindow(hwnd, nCmdShow); // показ окна
-    UpdateWindow(hwnd);         // перерисовка окна (передаётся HANDLE)
-
-    while (GetMessage(&msg, nullptr, 0, 0)) // Цикл обработки сообщений
+    while (GetMessage(&msg, nullptr, 0, 0)) 
     {
-        TranslateMessage(&msg); // функция расшифровывает системное сообщение
-        DispatchMessage(&msg);  // функция  передаёт сообщение в оконную процедуру на обработку
+        TranslateMessage(&msg);
+        DispatchMessage(&msg); 
     }
 
-    return static_cast<int> (msg.wParam); // возвращаемое значение точки входа
-
-
-
-    // hWnd - идентификатор окна.
-    // nullptr - нулевой указатель.
+    return static_cast<int> (msg.wParam); 
 }
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
-    HDC hdc; //создаём контекст устройства
-    PAINTSTRUCT ps; //создаём экземпляр структуры графического вывода
+    HDC hdc;
+    PAINTSTRUCT ps; 
     LOGFONT lf;
     HFONT hFont;
     RECT r;
@@ -142,7 +77,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
     static HWND hEdit;
 
 
-    //Цикл обработки сообщений
     switch (messg)
     {
         case WM_CREATE:
@@ -351,8 +285,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
                 curveLine[curveCount].x = GET_X_LPARAM(lParam);
                 curveLine[curveCount].y = GET_Y_LPARAM(lParam);
                 curveCount++;
-                HPEN hPen2 = CreatePen(PS_SOLID, line, color); //Создаётся объект
-                SelectObject(hdc, hPen2); //Объект делается текущим
+                HPEN hPen2 = CreatePen(PS_SOLID, line, color);
+                SelectObject(hdc, hPen2);
                 for (int i = 0; i < curveCount - 1; i++)
                 {
                     Line(hdc, curveLine[i].x, curveLine[i].y, curveLine[i + 1].x, curveLine[i + 1].y);
@@ -369,7 +303,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
                 poly[polyCount].y = GET_Y_LPARAM(lParam);
                 polyCount++;
                 HBRUSH hBrush = CreateSolidBrush(color);
-                SelectObject(hdc, hBrush); //Объект делается текущим
+                SelectObject(hdc, hBrush);
                 Polygon(hdc, poly, polyCount);
                 DeleteObject(hBrush);
             }
@@ -388,8 +322,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
             {
                 case 0:
                 {
-                    HPEN hPen2 = CreatePen(PS_SOLID, line, color); //Создаётся объект
-                    SelectObject(hdc, hPen2); //Объект делается текущим
+                    HPEN hPen2 = CreatePen(PS_SOLID, line, color); 
+                    SelectObject(hdc, hPen2); 
 
                     Line(hdc, X1, Y1, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
 
@@ -425,13 +359,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
                         r.bottom = Y2;
                         HBRUSH hBrush2 = CreateSolidBrush(color);
                         FillRect(hdc, &r, hBrush2);
-                        //Rectangle(hdc, X1, Y1, X2, Y2);
                         DeleteObject(hBrush2);
                     }
                     break;
                     case 4:
                     {
-                        HPEN hPen2 = CreatePen(PS_NULL, line, RGB(255, 255, 255)); //Создаётся объект
+                        HPEN hPen2 = CreatePen(PS_NULL, line, RGB(255, 255, 255));
                         SelectObject(hdc, hPen2);
                         Ellipse(hdc, X1, Y1, X2, Y2);
                         DeleteObject(hPen2);
@@ -447,8 +380,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
                     break;
                     case 5:
                     {
-                        //Создаём свой шрифт
-                        wcscpy_s(lf.lfFaceName, L"Times New Roman"); //копируем в строку название шрифта
+                        wcscpy_s(lf.lfFaceName, L"Times New Roman");
                         X2 = GET_X_LPARAM(lParam);
                         Y2 = GET_Y_LPARAM(lParam);
                         lf.lfHeight = Y2-Y1;
@@ -456,11 +388,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
                         lf.lfUnderline = 0;
                         lf.lfWidth = X1-X2;
                         lf.lfWeight = 40;
-                        lf.lfCharSet = DEFAULT_CHARSET; //значение по умолчанию
-                        lf.lfPitchAndFamily = DEFAULT_PITCH; //значения по умолчанию
+                        lf.lfCharSet = DEFAULT_CHARSET;
+                        lf.lfPitchAndFamily = DEFAULT_PITCH;
                         lf.lfEscapement = 0;
 
                         hFont = CreateFontIndirect(&lf);
+
                         SelectObject(hdc, hFont);
                         SetTextColor(hdc, color);
                         int textLen = GetWindowTextLengthA(hEdit) + 1;
@@ -477,18 +410,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 
         }
         break;
-
-            //сообщение выхода - разрушение окна
         case WM_DESTROY:
         {
-            PostQuitMessage(EXIT_SUCCESS); //Посылаем сообщение выхода с кодом 0 - нормальное завершение
+            PostQuitMessage(EXIT_SUCCESS); 
         }
         return 0;
 
 
         default:
         {
-            return(DefWindowProc(hWnd, messg, wParam, lParam)); //освобождаем очередь приложения от нераспознаных
+            return(DefWindowProc(hWnd, messg, wParam, lParam)); 
         }
     }
     return 0;
