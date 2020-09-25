@@ -7,10 +7,12 @@ processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
-//void DrawRect(RECT r, int Y1, int Y2, int X1, int X2, HDC hdc, LPARAM lParam, COLORREF color)
-//{
-//
-//}
+
+BOOL Line(HDC hdc, int x1, int y1, int x2, int y2)
+{
+    MoveToEx(hdc, x1, y1, NULL); //сделать текущими координаты x1, y1
+    return LineTo(hdc, x2, y2);
+}
 
 int CALLBACK  wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR szCmdLine, int nCmdShow)
 /*CALLBACK - #define для stdcall (соглашение для вызовов, вызываемый объект будет сам за собой очищать стек
@@ -128,76 +130,21 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
     HBRUSH hBrush;
     HPEN hPen;
     POINT pt;
+
     
     static COLORREF color = RGB(0, 0, 0);
     static bool isDraw = false;
     static int X1 = 0, Y1 = 0, X2 = 0, Y2 = 0;
-    static int shape = 0;
+    static int shape = 0, line = 1, curveCount = 0, polyCount = 0;
+    static POINT curveLine[256];
+    static POINT poly[256];
+    static wchar_t text[256];
+    static HWND hEdit;
+
 
     //Цикл обработки сообщений
     switch (messg)
     {
-        //сообщение рисования
-        //case WM_PAINT:
-        //{
-        //    hdc = BeginPaint(hWnd, &ps);
-
-        //    //Создаём свой шрифт
-        //    wcscpy_s(lf.lfFaceName, L"Times New Roman"); //копируем в строку название шрифта
-        //    lf.lfHeight = 20;
-        //    lf.lfItalic = 1;
-        //    lf.lfStrikeOut = 0;
-        //    lf.lfUnderline = 0;
-        //    lf.lfWidth = 10;
-        //    lf.lfWeight = 40;
-        //    lf.lfCharSet = DEFAULT_CHARSET; //значение по умолчанию
-        //    lf.lfPitchAndFamily = DEFAULT_PITCH; //значения по умолчанию
-        //    lf.lfEscapement = 0;
-
-        //    hFont = CreateFontIndirect(&lf);
-        //    SelectObject(hdc, hFont);
-        //    SetTextColor(hdc, RGB(0, 0, 255));
-        //    TextOut(hdc, 80, 40, L"Красота спасёт мир!!", 20);
-
-        //    //рисуем красный прямоугольник
-        //    r.top = 100;
-        //    r.left = 180;
-        //    r.right = 400;
-        //    r.bottom = 300;
-        //    FillRect(hdc, &r, HBRUSH(CreateSolidBrush(RGB(255, 0, 55))));
-
-        //    //рисуем зелёный эллипс
-        //    hBrush = CreateSolidBrush(RGB(10, 200, 100));
-        //    SelectObject(hdc, hBrush);
-        //    Ellipse(hdc, 20, 100, 200, 200);
-
-        //    //рисуем закруглённый прямоугольник
-        //    hBrush = CreateSolidBrush(RGB(250, 200, 100));
-        //    SelectObject(hdc, hBrush);
-        //    hPen = CreatePen(2, 2, RGB(0, 0, 255));
-        //    SelectObject(hdc, hPen);
-        //    RoundRect(hdc, 20, 250, 250, 350, 15, 15);
-
-
-        //    ValidateRect(hWnd, NULL);
-        //    EndPaint(hWnd, &ps);
-        //}
-        //break;
-        //case WM_PAINT:
-        //{
-
-        //    hdc = BeginPaint(hWnd, &ps);
-        //    r.top = X;
-        //    r.left = Y;
-        //    r.right = X + 50;
-        //    r.bottom = Y + 50;
-        //    FillRect(hdc, &r, HBRUSH(CreateSolidBrush(RGB(255, 0, 55))));
-
-        //    ValidateRect(hWnd, NULL);
-        //    EndPaint(hWnd, &ps);
-
-        //}
-        return 0;
         case WM_CREATE:
         {
             HWND hButtonGreen = CreateWindow(
@@ -230,6 +177,66 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
                 WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
                 0, 200, 100, 50, hWnd, reinterpret_cast<HMENU>(4), nullptr, nullptr
             );
+            HWND hButtonLine = CreateWindow(
+                L"BUTTON",
+                L"Line",
+                WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+                0, 300, 100, 50, hWnd, reinterpret_cast<HMENU>(5), nullptr, nullptr
+            );
+            HWND hButtonRect = CreateWindow(
+                L"BUTTON",
+                L"Rectangle",
+                WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+                0, 350, 100, 50, hWnd, reinterpret_cast<HMENU>(6), nullptr, nullptr
+            );
+            HWND hLineSizeS = CreateWindow(
+                L"Button",
+                L"Small",
+                WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+                0, 800, 100, 50, hWnd, reinterpret_cast<HMENU>(7), nullptr, nullptr
+            );
+            HWND hLineSizeM = CreateWindow(
+                L"Button",
+                L"Medium",
+                WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+                0, 850, 100, 50, hWnd, reinterpret_cast<HMENU>(8), nullptr, nullptr
+            );
+            HWND hLineSizeL = CreateWindow(
+                L"Button",
+                L"Large",
+                WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+                0, 900, 100, 50, hWnd, reinterpret_cast<HMENU>(9), nullptr, nullptr
+            );
+            HWND hButtonCurve = CreateWindow(
+                L"BUTTON",
+                L"Curve",
+                WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+                0, 400, 100, 50, hWnd, reinterpret_cast<HMENU>(10), nullptr, nullptr
+            );
+            HWND hButtonPolygon = CreateWindow(
+                L"BUTTON",
+                L"Polygon",
+                WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+                0, 450, 100, 50, hWnd, reinterpret_cast<HMENU>(11), nullptr, nullptr
+            );
+            HWND hButtonElipse = CreateWindow(
+                L"BUTTON",
+                L"Elipse",
+                WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+                0, 500, 100, 50, hWnd, reinterpret_cast<HMENU>(12), nullptr, nullptr
+            );
+            HWND hButtonText = CreateWindow(
+                L"BUTTON",
+                L"Text",
+                WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+                0, 550, 100, 50, hWnd, reinterpret_cast<HMENU>(13), nullptr, nullptr
+            );
+            hEdit = CreateWindow(
+                L"EDIT",
+                L"Text",
+                WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL,
+                0, 600, 100, 50, hWnd, reinterpret_cast<HMENU>(14), nullptr, nullptr
+            );
         }
         return 0;
         case WM_COMMAND:
@@ -261,25 +268,135 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
                     color = RGB(55, 0, 255);
                 }
                 break;
+                case 5:
+                {
+                    shape = 0;
+                }
+                break;
+                case 6:
+                {
+                    shape = 1;
+                }
+                break;
+                case 7:
+                {
+                    line = 1;
+                }
+                break;
+                case 8:
+                {
+                    line = 5;
+                }
+                break;
+                case 9:
+                {
+                    line = 10;
+                }
+                break;
+                case 10:
+                {
+                    shape = 2;
+                }
+                break;
+                case 11:
+                {
+                    shape = 3;
+                }
+                break;
+                case 12:
+                {
+                    shape = 4;
+                }
+                break;
+                case 13:
+                {
+                    shape = 5;
+                }
+                break;
 
                 default:
                     break;
             }
         }
         return 0;
+        case WM_RBUTTONDOWN:
+        {
+            if (shape == 2)
+            {
+                memset(curveLine, 0, sizeof(POINT) * 256);
+                curveCount = 0;
+            }
+            if (shape == 3)
+            {
+                memset(poly, 0, sizeof(POINT) * 256);
+                polyCount = 0;
+            }
+        }
+        break;
         case WM_LBUTTONDOWN:
         {
+            HDC hdc = GetDC(hWnd);
             X1 = GET_X_LPARAM(lParam);
             Y1 = GET_Y_LPARAM(lParam);
             X2 = GET_X_LPARAM(lParam);
             Y2 = GET_Y_LPARAM(lParam);
             isDraw = true;
-            //DeleteObject(hBrush);
+
+            if (shape == 2)
+            {
+                if (curveCount > 255)
+                {
+                    curveCount--;
+                }
+                curveLine[curveCount].x = GET_X_LPARAM(lParam);
+                curveLine[curveCount].y = GET_Y_LPARAM(lParam);
+                curveCount++;
+                HPEN hPen2 = CreatePen(PS_SOLID, line, color); //Создаётся объект
+                SelectObject(hdc, hPen2); //Объект делается текущим
+                for (int i = 0; i < curveCount - 1; i++)
+                {
+                    Line(hdc, curveLine[i].x, curveLine[i].y, curveLine[i + 1].x, curveLine[i + 1].y);
+                }
+                DeleteObject(hPen2);
+            }
+            if (shape == 3)
+            {
+                if (polyCount > 255)
+                {
+                    polyCount--;
+                }
+                poly[polyCount].x = GET_X_LPARAM(lParam);
+                poly[polyCount].y = GET_Y_LPARAM(lParam);
+                polyCount++;
+                HBRUSH hBrush = CreateSolidBrush(color);
+                SelectObject(hdc, hBrush); //Объект делается текущим
+                Polygon(hdc, poly, polyCount);
+                DeleteObject(hBrush);
+            }
+            if (shape == 5)
+            {
+            
+            }
+         
         }
         break;
         case WM_LBUTTONUP:
         {
             isDraw = false;
+            HDC hdc = GetDC(hWnd);
+            switch (shape)
+            {
+                case 0:
+                {
+                    HPEN hPen2 = CreatePen(PS_SOLID, line, color); //Создаётся объект
+                    SelectObject(hdc, hPen2); //Объект делается текущим
+
+                    Line(hdc, X1, Y1, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+
+                    DeleteObject(hPen2);
+                }
+                break;
+            }
         }
         break;
         case WM_MOUSEMOVE:
@@ -289,7 +406,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
             {
                 switch (shape)
                 {
-                    case 0:
+                    case 1:
                     {
                         r.top = Y1;
                         r.left = X1;
@@ -308,7 +425,48 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
                         r.bottom = Y2;
                         HBRUSH hBrush2 = CreateSolidBrush(color);
                         FillRect(hdc, &r, hBrush2);
+                        //Rectangle(hdc, X1, Y1, X2, Y2);
                         DeleteObject(hBrush2);
+                    }
+                    break;
+                    case 4:
+                    {
+                        HPEN hPen2 = CreatePen(PS_NULL, line, RGB(255, 255, 255)); //Создаётся объект
+                        SelectObject(hdc, hPen2);
+                        Ellipse(hdc, X1, Y1, X2, Y2);
+                        DeleteObject(hPen2);
+
+                        X2 = GET_X_LPARAM(lParam);
+                        Y2 = GET_Y_LPARAM(lParam);
+
+                        HBRUSH hBrush2 = CreateSolidBrush(color);
+                        SelectObject(hdc, hBrush2);
+                        Ellipse(hdc, X1, Y1, X2, Y2);
+                        DeleteObject(hBrush2);
+                    }
+                    break;
+                    case 5:
+                    {
+                        //Создаём свой шрифт
+                        wcscpy_s(lf.lfFaceName, L"Times New Roman"); //копируем в строку название шрифта
+                        X2 = GET_X_LPARAM(lParam);
+                        Y2 = GET_Y_LPARAM(lParam);
+                        lf.lfHeight = Y2-Y1;
+                        lf.lfStrikeOut = 0;
+                        lf.lfUnderline = 0;
+                        lf.lfWidth = X1-X2;
+                        lf.lfWeight = 40;
+                        lf.lfCharSet = DEFAULT_CHARSET; //значение по умолчанию
+                        lf.lfPitchAndFamily = DEFAULT_PITCH; //значения по умолчанию
+                        lf.lfEscapement = 0;
+
+                        hFont = CreateFontIndirect(&lf);
+                        SelectObject(hdc, hFont);
+                        SetTextColor(hdc, color);
+                        int textLen = GetWindowTextLengthA(hEdit) + 1;
+                        TCHAR buff[1024];
+                        GetWindowText(hEdit, buff, textLen);
+                        TextOut(hdc, X1, Y1, buff, textLen);
                     }
                     break;
                     default:
