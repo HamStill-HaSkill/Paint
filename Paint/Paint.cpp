@@ -306,12 +306,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
                 SelectObject(hdc, hBrush);
                 Polygon(hdc, poly, polyCount);
                 DeleteObject(hBrush);
-            }
-            if (shape == 5)
-            {
-            
-            }
-         
+            }        
         }
         break;
         case WM_LBUTTONUP:
